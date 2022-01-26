@@ -1,0 +1,118 @@
+CREATE TABLE Clientes (
+    clienteid int IDENTITY(1,1)  NOT NULL PRIMARY KEY,
+    nombres varchar(255),
+    apellidos varchar(255),
+    direccion varchar(255),
+    DPI varchar(255),
+	edad int
+
+	
+);
+
+CREATE TABLE Productos (
+    productoid int IDENTITY(1,1)  NOT NULL PRIMARY KEY,
+    descripcionproducto varchar(255),
+    precioproducto varchar(255)
+
+	
+);
+
+CREATE TABLE Ventasencabe (
+    ventaencabeid int IDENTITY(1,1)  NOT NULL PRIMARY KEY,
+    fechaventa date,
+	 clienteid int FOREIGN KEY REFERENCES Clientes(clienteid)
+   
+    
+
+	
+);
+CREATE TABLE Ventasdetalle (
+    ventasdetalleid int IDENTITY(1,1)  NOT NULL PRIMARY KEY,
+ 	ventaencabeid int FOREIGN KEY REFERENCES Ventasencabe(ventaencabeid),
+	productoid int FOREIGN KEY REFERENCES Productos(productoid),
+	cantidadventa int
+
+
+	
+);
+
+CREATE TABLE Inventario (
+    inventarioid int IDENTITY(1,1)  NOT NULL PRIMARY KEY,
+   productoid int FOREIGN KEY REFERENCES Productos(productoid),
+    stock varchar(255),
+    minimo int,
+	alerta int	
+
+	
+);
+
+
+
+//procedimiento
+
+CREATE PROCEDURE PAIcliente  (@clienteid           int,
+                                          @nombres   VARCHAR(30),
+                                          @apellidos    VARCHAR(30),
+                                          @direccion        VARCHAR(50),
+                                          @DPI          VARCHAR(20),
+										  @edad			INT,
+                                          @StatementType varchar(20) = '')
+AS
+  BEGIN
+      IF @StatementType = 'Insert'
+        BEGIN
+            INSERT INTO Clientes(nombres,apellidos,direccion,DPI,edad )
+            VALUES     ( @nombres,
+                         @apellidos,
+                         @direccion,
+                         @DPI,
+                         @edad)
+        END
+
+      IF @StatementType = 'Select'
+        BEGIN
+            SELECT *
+            FROM   Clientes
+        END
+
+      IF @StatementType = 'Update'
+        BEGIN
+            UPDATE Clientes
+            SET    nombres = @nombres,
+                   apellidos = @apellidos,
+                   direccion = @direccion,
+                   DPI = @DPI,
+				   edad =   @edad
+            WHERE  clienteid = @clienteid
+        END
+      ELSE IF @StatementType = 'Delete'
+        BEGIN
+            DELETE FROM Clientes
+            WHERE  clienteid = @clienteid
+        END
+  END
+
+//trigger
+
+create trigger alerta
+ on Inventario
+ after update
+ as
+  if exists (select * from Inventario where stock<minimo)
+  begin
+   update Inventario set alerta=1
+   
+  end;
+
+
+//trigger 2
+
+create trigger alertainv
+ on Inventario
+ after update
+ as
+  if exists (select * from Inventario where stock>minimo)
+  begin
+   update Inventario set alerta=0
+   
+  end;
